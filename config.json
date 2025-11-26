@@ -41,6 +41,13 @@
             "group": "其他",
             "module": "tools.other_tools.password_manager",
             "class": "PasswordManagerDialog"
+        },
+        {
+            "name": "日期计数",
+            "description": "计算日期之间的天数",
+            "group": "其他",
+            "module": "tools.other_tools.date_counter",
+            "class": "DateCounterDialog"
         }
     ]
 }

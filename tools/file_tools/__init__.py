@@ -2,5 +2,7 @@
 from .batch_rename import BatchRenameDialog
 from .search_replace import SearchReplaceDialog
 from .remove_extra_newlines import RemoveExtraNewlinesDialog
+from .get_file_names import GetFileNamesDialog
+from .replace_in_filenames import ReplaceInFilenamesDialog
 
-__all__ = ['BatchRenameDialog', 'SearchReplaceDialog', 'RemoveExtraNewlinesDialog']
+__all__ = ['BatchRenameDialog', 'SearchReplaceDialog', 'RemoveExtraNewlinesDialog', 'GetFileNamesDialog', 'ReplaceInFilenamesDialog']

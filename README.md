@@ -18,6 +18,7 @@ ToolBox/
 │   │   ├── replace_in_filenames.py     # 替换文件名中字符工具
 │   │   └── search_replace.py           # 文件夹内搜索替换工具
 │   └── other_tools/        # 其他工具
+│       ├── date_counter.py             # 日期计数工具
 │       └── password_manager.py         # 密码管理器工具
 └── myenv/                  # Python虚拟环境
 ```
@@ -111,7 +112,16 @@ ToolBox/
 
 ### 其他工具
 
-#### 4.1 password_manager.py
+#### 4.1 date_counter.py
+
+日期计数工具，用于记录重要日期并计算日期之间的差异。
+
+**主要功能：**
+- 添加带标题的日期记录
+- 显示日期距今天数（颜色标识：未来日期蓝色、过去日期红色、今天绿色）
+- 计算两个记录日期之间的天数差异
+
+#### 4.2 password_manager.py
 
 密码管理器工具，用于安全存储、管理和生成密码。
 
