@@ -1,0 +1,5 @@
+myenv/
+___pycache___/
+*.py[cod]
+*$py.class
+*.db

@@ -1,0 +1,46 @@
+{
+    "tools": [
+        {
+            "name": "获取文件名列表",
+            "description": "获取指定目录下的所有文件名",
+            "group": "文件处理",
+            "module": "tools.file_tools.get_file_names",
+            "class": "GetFileNamesDialog"
+        },
+        {
+            "name": "替换文件名中字符",
+            "description": "替换指定目录下所有文件名中的指定字符",
+            "group": "文件处理",
+            "module": "tools.file_tools.replace_in_filenames",
+            "class": "ReplaceInFilenamesDialog" 
+        },
+        {
+            "name": "格式化书名",
+            "description": "用书名号格式化书名",
+            "group": "文件处理",
+            "module": "tools.file_tools.batch_rename",
+            "class": "BatchRenameDialog"
+        },
+        {
+            "name": "文件夹内搜索替换",
+            "description": "在文件夹内搜索并替换指定文本",
+            "group": "文件处理",
+            "module": "tools.file_tools.search_replace",
+            "class": "SearchReplaceDialog"
+        },
+        {
+            "name": "去掉多余空行",
+            "description": "在文件中去掉多余的空行，保留至多一个空行",
+            "group": "文件处理",
+            "module": "tools.file_tools.remove_extra_newlines",
+            "class": "RemoveExtraNewlinesDialog"
+        },
+        {
+            "name": "密码管理器",
+            "description": "管理和生成密码",
+            "group": "其他",
+            "module": "tools.other_tools.password_manager",
+            "class": "PasswordManagerDialog"
+        }
+    ]
+}
