@@ -745,7 +745,13 @@ class PasswordManagerDialog(QDialog):
             
             # 设置表格数据
             self.password_table.setItem(row_idx, 0, QTableWidgetItem(password['title']))
-            self.password_table.setItem(row_idx, 1, QTableWidgetItem(password['username'] or ''))
+            
+            # 解密用户名
+            try:
+                decrypted_username = PasswordEncryption.decrypt(password['username']) if password['username'] else ''
+            except Exception as e:
+                decrypted_username = '[无法解密]'
+            self.password_table.setItem(row_idx, 1, QTableWidgetItem(decrypted_username))
             
             # 密码列显示为掩码
             password_item = QTableWidgetItem("••••••••")
@@ -796,6 +802,14 @@ class PasswordManagerDialog(QDialog):
                                      if self.password_table.item(r, c) is not None else None)
                 except Exception as e:
                     QMessageBox.critical(self, "解密失败", f"无法解密密码: {str(e)}")
+        
+        # 添加复制用户名到剪贴板的功能
+        elif column == 1:
+            username = self.password_table.item(row, column).text()
+            if username and username != '[无法解密]':
+                clipboard = QApplication.clipboard()
+                clipboard.setText(username)
+                QMessageBox.information(self, "成功", "用户名已复制到剪贴板")
     
     def add_password(self):
         """
@@ -919,7 +933,13 @@ class PasswordManagerDialog(QDialog):
             if password_data:
                 data = password_data[0]
                 title_edit.setText(data['title'])
-                username_edit.setText(data['username'] or '')
+                # 解密并显示现有用户名
+                try:
+                    if data['username']:
+                        decrypted_username = PasswordEncryption.decrypt(data['username'])
+                        username_edit.setText(decrypted_username)
+                except Exception as e:
+                    QMessageBox.warning(self, "警告", "无法解密现有用户名")
                 # 解密并显示现有密码
                 try:
                     decrypted_password = PasswordEncryption.decrypt(data['encrypted_password'])
@@ -957,8 +977,11 @@ class PasswordManagerDialog(QDialog):
             # 加密密码
             encrypted_password = PasswordEncryption.encrypt(password)
             
-            # 获取表单数据
+            # 加密用户名
             username = username_edit.text().strip()
+            encrypted_username = PasswordEncryption.encrypt(username) if username else None
+            
+            # 获取表单数据
             url = url_edit.text().strip()
             category = category_combo.currentText()
             expires_at = expires_edit.date().toString('yyyy-MM-dd')
@@ -974,7 +997,7 @@ class PasswordManagerDialog(QDialog):
                                category = ?, notes = ?, expires_at = ?, is_favorite = ?, 
                                updated_at = CURRENT_TIMESTAMP 
                            WHERE id = ?''',
-                        (title, username, encrypted_password, url, category, 
+                        (title, encrypted_username, encrypted_password, url, category, 
                          notes, expires_at, is_favorite, password_id)
                     )
                     # 密码已更新，不显示成功提示
@@ -985,7 +1008,7 @@ class PasswordManagerDialog(QDialog):
                            (title, username, encrypted_password, url, category, 
                             notes, expires_at, is_favorite) 
                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (title, username, encrypted_password, url, category, 
+                        (title, encrypted_username, encrypted_password, url, category, 
                          notes, expires_at, is_favorite)
                     )
                     # 密码已添加，不显示成功提示
