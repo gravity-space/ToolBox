@@ -12,7 +12,7 @@
             "description": "替换指定目录下所有文件名中的指定字符",
             "group": "文件批处理",
             "module": "tools.file_tools.replace_in_filenames",
-            "class": "ReplaceInFilenamesDialog" 
+            "class": "ReplaceInFilenamesDialog"
         },
         {
             "name": "格式化书名",
@@ -34,6 +34,13 @@
             "group": "文件批处理",
             "module": "tools.file_tools.remove_extra_newlines",
             "class": "RemoveExtraNewlinesDialog"
+        },
+        {
+            "name": "文本插入",
+            "description": "在文件夹内的文件中的特定行插入一行指定文本，位置0为开头，位置-1为结尾",
+            "group": "文件批处理",
+            "module": "tools.file_tools.insert_text",
+            "class": "InsertTextDialog"
         },
         {
             "name": "密码管理器",

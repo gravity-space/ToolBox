@@ -250,17 +250,41 @@ class ReplaceInFilenamesDialog(QDialog):
                     # 检查新文件名是否已存在
                     new_file_path = os.path.join(dir_path, new_filename)
                     if os.path.exists(new_file_path):
-                        self.log_edit.append(f"警告: {os.path.relpath(file_path, self.folder_path)} -> {new_filename} (目标文件已存在，将被跳过)")
+                        try:
+                            # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                            rel_path = os.path.relpath(file_path, self.folder_path)
+                        except ValueError:
+                            # 如果路径在不同驱动器上，直接使用文件名
+                            rel_path = os.path.basename(file_path)
+                        self.log_edit.append(f"警告: {rel_path} -> {new_filename} (目标文件已存在，将被跳过)")
                     else:
                         files_to_replace += 1
                         self.preview_results.append((file_path, new_filename))
-                        self.log_edit.append(f"将替换: {os.path.relpath(file_path, self.folder_path)} -> {new_filename}")
+                        try:
+                            # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                            rel_path = os.path.relpath(file_path, self.folder_path)
+                        except ValueError:
+                            # 如果路径在不同驱动器上，直接使用文件名
+                            rel_path = os.path.basename(file_path)
+                        self.log_edit.append(f"将替换: {rel_path} -> {new_filename}")
                 else:
                     # 文件名中不存在要查找的字符
-                    self.log_edit.append(f"无需替换: {os.path.relpath(file_path, self.folder_path)}")
+                    try:
+                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                        rel_path = os.path.relpath(file_path, self.folder_path)
+                    except ValueError:
+                        # 如果路径在不同驱动器上，直接使用文件名
+                        rel_path = os.path.basename(file_path)
+                    self.log_edit.append(f"无需替换: {rel_path}")
             
             except Exception as e:
-                self.log_edit.append(f"检查文件 {os.path.relpath(file_path, self.folder_path)} 时出错: {str(e)}")
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
+                self.log_edit.append(f"检查文件 {rel_path} 时出错: {str(e)}")
         
         self.log_edit.append(f"\n预览完成！")
         self.log_edit.append(f"将替换: {files_to_replace} 个文件的文件名")
@@ -317,14 +341,32 @@ class ReplaceInFilenamesDialog(QDialog):
                     # 执行重命名
                     os.rename(file_path, new_file_path)
                     files_replaced += 1
-                    self.log_edit.append(f"已替换: {os.path.relpath(file_path, self.folder_path)} -> {new_filename}")
+                    try:
+                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                        rel_path = os.path.relpath(file_path, self.folder_path)
+                    except ValueError:
+                        # 如果路径在不同驱动器上，直接使用文件名
+                        rel_path = os.path.basename(file_path)
+                    self.log_edit.append(f"已替换: {rel_path} -> {new_filename}")
                 else:
-                    self.log_edit.append(f"跳过: {os.path.relpath(file_path, self.folder_path)} (目标文件已存在)")
+                    try:
+                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                        rel_path = os.path.relpath(file_path, self.folder_path)
+                    except ValueError:
+                        # 如果路径在不同驱动器上，直接使用文件名
+                        rel_path = os.path.basename(file_path)
+                    self.log_edit.append(f"跳过: {rel_path} (目标文件已存在)")
                     errors += 1
                     
             except Exception as e:
                 errors += 1
-                self.log_edit.append(f"替换 {os.path.relpath(file_path, self.folder_path)} 时出错: {str(e)}")
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
+                self.log_edit.append(f"替换 {rel_path} 时出错: {str(e)}")
         
         # 完成消息
         self.log_edit.append(f"\n替换完成！")

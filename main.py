@@ -210,18 +210,6 @@ class ToolBoxApp(QMainWindow):
         
         return btn
     
-    def __init__(self):
-        super().__init__()
-        # 初始化工具列表
-        self.tools = self.initialize_tools()
-        self.init_ui()
-        
-        # 存储工具对话框引用，防止被垃圾回收
-        self.active_tool_dialogs = []
-        
-        # 连接窗口大小变化事件，当窗口调整大小时重新计算布局
-        self.resizeEvent = self.on_resize
-        
     def on_tool_clicked(self, tool):
         """处理工具按钮点击事件"""
         self.statusBar().showMessage(f'正在启动: {tool.name}')

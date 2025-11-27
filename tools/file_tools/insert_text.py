@@ -4,18 +4,17 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel, QMessageB
 from PyQt6.QtCore import Qt
 
 
-class SearchReplaceDialog(QDialog):
-    """文件夹内搜索替换工具对话框"""
+class InsertTextDialog(QDialog):
+    """在文件夹内的文件中的特定行插入一行指定文本工具对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
         self.folder_path = ""  # 初始文件夹路径为空
-        self.preview_results = []  # 存储预览结果
         # 从config.json中获取窗口标题（使用工具名称）
         if parent and hasattr(parent, 'tools'):
             # 查找当前工具的配置
             for tool in parent.tools:
-                if tool.class_name == 'SearchReplaceDialog':
+                if hasattr(tool, 'class_name') and tool.class_name == 'InsertTextDialog':
                     self.setWindowTitle(tool.name)
                     break
         self.init_ui()
@@ -37,8 +36,8 @@ class SearchReplaceDialog(QDialog):
         # 设置窗口属性
         # 如果未在构造函数中设置窗口标题，则使用默认标题
         if not self.windowTitle():
-            self.setWindowTitle("窗口")
-        self.resize(700, 500)  # 只设置大小，不设置位置
+            self.setWindowTitle("文本插入")
+        self.resize(600, 400)  # 只设置大小，不设置位置
         
         # 主布局
         main_layout = QVBoxLayout(self)
@@ -71,46 +70,42 @@ class SearchReplaceDialog(QDialog):
         file_type_layout.addWidget(self.custom_type_edit)
         main_layout.addLayout(file_type_layout)
         
-        # 搜索替换输入
-        search_layout = QHBoxLayout()
-        search_label = QLabel("查找内容:")
-        self.search_edit = QLineEdit()
+        # 插入文本输入
+        text_label = QLabel("插入文本 (支持多行):")
+        main_layout.addWidget(text_label)
+        self.text_edit = QTextEdit()
+        self.text_edit.setMinimumHeight(100)
+        self.text_edit.setPlaceholderText("在此输入要插入的文本，支持多行输入...")
+        main_layout.addWidget(self.text_edit)
         
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_edit)
-        main_layout.addLayout(search_layout)
+        # 插入位置输入
+        position_layout = QHBoxLayout()
+        position_label = QLabel("插入位置 (0为开头, -1为结尾):")
+        self.position_edit = QLineEdit("0")  # 默认在开头插入
         
-        replace_layout = QHBoxLayout()
-        replace_label = QLabel("替换为:")
-        self.replace_edit = QLineEdit()
-        
-        replace_layout.addWidget(replace_label)
-        replace_layout.addWidget(self.replace_edit)
-        main_layout.addLayout(replace_layout)
+        position_layout.addWidget(position_label)
+        position_layout.addWidget(self.position_edit)
+        main_layout.addLayout(position_layout)
         
         # 选项设置
         options_layout = QHBoxLayout()
-        self.case_sensitive_check = QCheckBox("区分大小写")
-        self.use_regex_check = QCheckBox("使用正则表达式")
         self.include_subfolders_check = QCheckBox("包含子文件夹")
         self.include_subfolders_check.setChecked(True)
         
-        options_layout.addWidget(self.case_sensitive_check)
-        options_layout.addWidget(self.use_regex_check)
         options_layout.addWidget(self.include_subfolders_check)
         main_layout.addLayout(options_layout)
         
         # 操作按钮
         button_layout = QHBoxLayout()
-        preview_btn = QPushButton("搜索")
-        preview_btn.clicked.connect(self.preview_replace)
-        replace_btn = QPushButton("替换")
-        replace_btn.clicked.connect(self.start_replace)
+        preview_btn = QPushButton("预览")
+        preview_btn.clicked.connect(self.preview_insert)
+        insert_btn = QPushButton("插入")
+        insert_btn.clicked.connect(self.start_insert)
         cancel_btn = QPushButton("取消")
         cancel_btn.clicked.connect(self.close)
         
         button_layout.addWidget(preview_btn)
-        button_layout.addWidget(replace_btn)
+        button_layout.addWidget(insert_btn)
         button_layout.addWidget(cancel_btn)
         main_layout.addLayout(button_layout)
         
@@ -121,8 +116,8 @@ class SearchReplaceDialog(QDialog):
         self.log_edit.setReadOnly(True)
         main_layout.addWidget(self.log_edit)
         
-        # 存储预览结果，用于后续替换
-        self.preview_results = []
+        # 存储预览结果，用于后续插入
+        self.preview_files = []
         
         # 将窗口设置在屏幕中央
         self.center_window()
@@ -195,179 +190,155 @@ class SearchReplaceDialog(QDialog):
         
         return files_to_process
     
-    def preview_replace(self):
-        """搜索替换结果"""
+    def parse_position(self, position_str):
+        """解析插入位置"""
+        try:
+            position = int(position_str)
+            return position
+        except ValueError:
+            QMessageBox.warning(self, "警告", "插入位置必须是整数！")
+            return None
+    
+    def preview_insert(self):
+        """预览插入操作"""
         # 验证输入
         if not self.folder_path:
             QMessageBox.warning(self, "警告", "请先选择文件夹！")
             return
 
-        search_text = self.search_edit.text()
-        if not search_text:
-            QMessageBox.warning(self, "警告", "请输入查找内容！")
+        insert_text = self.text_edit.toPlainText()
+        if not insert_text.strip():
+            QMessageBox.warning(self, "警告", "请输入要插入的文本！")
             return
-
+        
+        position = self.parse_position(self.position_edit.text())
+        if position is None:
+            return
+        
         self.log_edit.clear()
-        self.log_edit.append("开始搜索替换结果...")
-        self.preview_results = []
+        self.log_edit.append("开始预览插入操作...")
+        self.preview_files = []
         
         files_to_process = self.get_files_to_process()
         self.log_edit.append(f"找到 {len(files_to_process)} 个文件待处理")
         
-        total_matches = 0
-        files_with_matches = 0
+        valid_files = 0
         
         for file_path in files_to_process:
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                    lines = f.readlines()
                 
-                # 执行搜索
-                flags = 0 if self.case_sensitive_check.isChecked() else re.IGNORECASE
-                
-                if self.use_regex_check.isChecked():
-                    # 使用正则表达式搜索
-                    matches = list(re.finditer(search_text, content, flags))
+                # 计算实际插入位置
+                if position == -1:
+                    actual_position = len(lines)
+                elif position < 0:
+                    actual_position = max(0, len(lines) + position)
                 else:
-                    # 简单字符串搜索
-                    if self.case_sensitive_check.isChecked():
-                        matches = [match.start() for match in re.finditer(re.escape(search_text), content)]
-                    else:
-                        matches = [match.start() for match in re.finditer(re.escape(search_text), content, re.IGNORECASE)]
+                    actual_position = min(position, len(lines))
                 
-                if matches:
-                    files_with_matches += 1
-                    total_matches += len(matches)
-                    self.preview_results.append((file_path, content, len(matches)))
-                    
-                    # 显示文件中找到的匹配数
-                    try:
-                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
-                        rel_path = os.path.relpath(file_path, self.folder_path)
-                    except ValueError:
-                        # 如果路径在不同驱动器上，直接使用文件名
-                        rel_path = os.path.basename(file_path)
-                    self.log_edit.append(f"在 {rel_path} 中找到 {len(matches)} 处匹配")
-                    
-                    # 显示部分匹配内容作为预览
-                    if self.use_regex_check.isChecked():
-                        # 对于正则表达式，显示前几个匹配
-                        for i, match in enumerate(matches[:3]):
-                            start = max(0, match.start() - 20)
-                            end = min(len(content), match.end() + 20)
-                            context = content[start:end]
-                            self.log_edit.append(f"  匹配 {i+1}:")
-                            self.log_edit.append("---------------")
-                            self.log_edit.append(f"{context}")
-                            self.log_edit.append("---------------")
+                valid_files += 1
+                self.preview_files.append((file_path, lines, actual_position))
+                
+                # 显示预览信息
+                rel_path = os.path.relpath(file_path, self.folder_path)
+                self.log_edit.append(f"将在 {rel_path} 的第 {actual_position} 行前插入文本")
+                
+                # 显示部分文件内容作为预览
+                start_line = max(0, actual_position - 2)
+                end_line = min(len(lines), actual_position + 3)
+                
+                # 对于多行文本，在预览中显示第一行和行数信息
+                insert_lines = insert_text.split('\n')
+                preview_text = insert_lines[0]
+                if len(insert_lines) > 1:
+                    preview_text += f"... (共{len(insert_lines)}行)"
+                
+                for i in range(start_line, end_line):
+                    if i == actual_position:
+                        self.log_edit.append(f"  > 【将在此处插入】 {preview_text}")
                     else:
-                        # 对于普通文本，显示前几个匹配位置的上下文
-                        for i, pos in enumerate(matches[:3]):
-                            start = max(0, pos - 20)
-                            end = min(len(content), pos + len(search_text) + 20)
-                            context = content[start:end]
-                            self.log_edit.append(f"  匹配 {i+1}:")
-                            self.log_edit.append("---------------")
-                            self.log_edit.append(f"{context}")
-                            self.log_edit.append("---------------")
-        
+                        self.log_edit.append(f"  {i}: {lines[i].rstrip()}")
+                if end_line == len(lines) and actual_position == len(lines):
+                    self.log_edit.append(f"  > 【将在此处插入】 {preview_text}")
+                
+                self.log_edit.append("---------------")
+            
             except UnicodeDecodeError:
-                try:
-                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
-                    rel_path = os.path.relpath(file_path, self.folder_path)
-                except ValueError:
-                    # 如果路径在不同驱动器上，直接使用文件名
-                    rel_path = os.path.basename(file_path)
-                self.log_edit.append(f"跳过二进制文件: {rel_path}")
+                self.log_edit.append(f"跳过二进制文件: {os.path.relpath(file_path, self.folder_path)}")
             except Exception as e:
-                try:
-                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
-                    rel_path = os.path.relpath(file_path, self.folder_path)
-                except ValueError:
-                    # 如果路径在不同驱动器上，直接使用文件名
-                    rel_path = os.path.basename(file_path)
-                self.log_edit.append(f"处理文件 {rel_path} 时出错: {str(e)}")
+                self.log_edit.append(f"读取文件 {os.path.relpath(file_path, self.folder_path)} 时出错: {str(e)}")
         
-        self.log_edit.append(f"\n搜索完成！")
-        self.log_edit.append(f"在 {files_with_matches} 个文件中找到 {total_matches} 处匹配")
+        self.log_edit.append(f"\n预览完成！")
+        self.log_edit.append(f"将对 {valid_files} 个文件执行插入操作")
         
-        if total_matches > 0:
-            QMessageBox.information(self, "搜索完成", f"在 {files_with_matches} 个文件中找到 {total_matches} 处匹配\n点击'替换'执行实际替换操作")
+        if valid_files > 0:
+            QMessageBox.information(self, "预览完成", f"将对 {valid_files} 个文件执行插入操作\n点击'插入'执行实际插入操作")
         else:
-            QMessageBox.information(self, "未找到匹配", "没有找到与搜索条件匹配的内容")
+            QMessageBox.information(self, "无文件可处理", "没有找到符合条件的有效文件")
     
-    def start_replace(self):
-        """开始执行替换操作"""
+    def start_insert(self):
+        """开始执行插入操作"""
         # 验证输入
         if not self.folder_path:
             QMessageBox.warning(self, "警告", "请先选择文件夹！")
             return
         
-        search_text = self.search_edit.text()
-        if not search_text:
-            QMessageBox.warning(self, "警告", "请输入查找内容！")
+        insert_text = self.text_edit.toPlainText()
+        if not insert_text.strip():
+            QMessageBox.warning(self, "警告", "请输入要插入的文本！")
+            return
+        
+        position = self.parse_position(self.position_edit.text())
+        if position is None:
             return
         
         # 如果没有预览结果，先执行预览
-        if not self.preview_results:
-            reply = QMessageBox.question(self, "确认操作", "您还没有搜索结果，是否继续？", 
+        if not self.preview_files:
+            reply = QMessageBox.question(self, "确认操作", "您还没有预览结果，是否继续？", 
                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply != QMessageBox.StandardButton.Yes:
                 return
-            # 执行搜索以获取文件列表
-            self.preview_replace()
+            # 执行预览以获取文件列表
+            self.preview_insert()
             # 如果还是没有结果，直接返回
-            if not self.preview_results:
+            if not self.preview_files:
                 return
         
-        # 再次确认替换操作
-        total_matches = sum(count for _, _, count in self.preview_results)
-        reply = QMessageBox.question(self, "确认替换", f"确定要替换所有 {total_matches} 处匹配吗？\n此操作无法撤销！", 
+        # 再次确认插入操作
+        reply = QMessageBox.question(self, "确认插入", f"确定要对 {len(self.preview_files)} 个文件执行插入操作吗？\n此操作无法撤销！", 
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if reply != QMessageBox.StandardButton.Yes:
             return
         
-        self.log_edit.append("\n开始执行替换操作...")
+        self.log_edit.append("\n开始执行插入操作...")
         
         files_changed = 0
-        total_replaced = 0
         errors = 0
         
-        search_text = self.search_edit.text()
-        replace_text = self.replace_edit.text()
+        # 确保文本以换行符结尾
+        if not insert_text.endswith('\n'):
+            insert_text += '\n'
         
-        for file_path, original_content, _ in self.preview_results:
+        for file_path, lines, actual_position in self.preview_files:
             try:
-                # 执行替换
-                flags = 0 if self.case_sensitive_check.isChecked() else re.IGNORECASE
-                
-                if self.use_regex_check.isChecked():
-                    # 使用正则表达式替换
-                    new_content, count = re.subn(search_text, replace_text, original_content, flags=flags)
-                else:
-                    # 简单字符串替换
-                    if self.case_sensitive_check.isChecked():
-                        new_content = original_content.replace(search_text, replace_text)
-                        count = original_content.count(search_text)
-                    else:
-                        # 不区分大小写的字符串替换
-                        new_content = re.sub(re.escape(search_text), replace_text, original_content, flags=re.IGNORECASE)
-                        count = len(re.findall(re.escape(search_text), original_content, flags=re.IGNORECASE))
+                # 执行插入
+                new_lines = lines.copy()
+                new_lines.insert(actual_position, insert_text)
                 
                 # 写入新内容
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
+                    f.writelines(new_lines)
                 
                 files_changed += 1
-                total_replaced += count
                 try:
                     # 尝试获取相对路径，如果在不同驱动器则使用文件名
                     rel_path = os.path.relpath(file_path, self.folder_path)
                 except ValueError:
                     # 如果路径在不同驱动器上，直接使用文件名
                     rel_path = os.path.basename(file_path)
-                self.log_edit.append(f"已替换 {rel_path} 中的 {count} 处匹配")
+                self.log_edit.append(f"已在 {rel_path} 的第 {actual_position} 行前插入文本")
                 
             except Exception as e:
                 errors += 1
@@ -377,12 +348,11 @@ class SearchReplaceDialog(QDialog):
                 except ValueError:
                     # 如果路径在不同驱动器上，直接使用文件名
                     rel_path = os.path.basename(file_path)
-                self.log_edit.append(f"替换 {rel_path} 时出错: {str(e)}")
+                self.log_edit.append(f"插入 {rel_path} 时出错: {str(e)}")
         
         # 完成消息
-        self.log_edit.append(f"\n替换完成！")
+        self.log_edit.append(f"\n插入完成！")
         self.log_edit.append(f"成功修改: {files_changed} 个文件")
-        self.log_edit.append(f"替换总数: {total_replaced} 处")
         self.log_edit.append(f"失败: {errors} 个文件")
         
-        QMessageBox.information(self, "完成", f"替换操作已完成！\n成功修改: {files_changed} 个文件\n替换总数: {total_replaced} 处\n失败: {errors} 个文件")
+        QMessageBox.information(self, "完成", f"插入操作已完成！\n成功修改: {files_changed} 个文件\n失败: {errors} 个文件")
