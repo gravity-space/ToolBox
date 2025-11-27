@@ -218,17 +218,39 @@ class RemoveExtraNewlinesDialog(QDialog):
                     original_empty_lines = original_content.count('\n\n')
                     modified_empty_lines = modified_content.count('\n\n')
                     
-                    rel_path = os.path.relpath(file_path, self.folder_path)
+                    try:
+                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                        rel_path = os.path.relpath(file_path, self.folder_path)
+                    except ValueError:
+                        # 如果路径在不同驱动器上，直接使用文件名
+                        rel_path = os.path.basename(file_path)
                     self.log_edit.append(f"文件 {rel_path} 中存在多余空行")
                     self.log_edit.append(f"  原连续空行数: {original_empty_lines}, 修改后连续空行数: {modified_empty_lines}")
                 else:
-                    rel_path = os.path.relpath(file_path, self.folder_path)
+                    try:
+                        # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                        rel_path = os.path.relpath(file_path, self.folder_path)
+                    except ValueError:
+                        # 如果路径在不同驱动器上，直接使用文件名
+                        rel_path = os.path.basename(file_path)
                     self.log_edit.append(f"文件 {rel_path} 无需修改")
             
             except UnicodeDecodeError:
-                self.log_edit.append(f"跳过二进制文件: {os.path.relpath(file_path, self.folder_path)}")
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
+                self.log_edit.append(f"跳过二进制文件: {rel_path}")
             except Exception as e:
-                self.log_edit.append(f"处理文件 {os.path.relpath(file_path, self.folder_path)} 时出错: {str(e)}")
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
+                self.log_edit.append(f"处理文件 {rel_path} 时出错: {str(e)}")
         
         self.log_edit.append(f"\n预览完成！")
         self.log_edit.append(f"需要处理: {files_with_extra_newlines} 个文件")
@@ -276,12 +298,22 @@ class RemoveExtraNewlinesDialog(QDialog):
                     f.write(modified_content)
                 
                 files_processed += 1
-                rel_path = os.path.relpath(file_path, self.folder_path)
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
                 self.log_edit.append(f"已处理: {rel_path}")
                 
             except Exception as e:
                 errors += 1
-                rel_path = os.path.relpath(file_path, self.folder_path)
+                try:
+                    # 尝试获取相对路径，如果在不同驱动器则使用文件名
+                    rel_path = os.path.relpath(file_path, self.folder_path)
+                except ValueError:
+                    # 如果路径在不同驱动器上，直接使用文件名
+                    rel_path = os.path.basename(file_path)
                 self.log_edit.append(f"处理 {rel_path} 时出错: {str(e)}")
         
         # 完成消息
