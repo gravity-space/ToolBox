@@ -69,15 +69,7 @@ class InsertTextDialog(QDialog):
         file_type_layout.addWidget(self.file_type_combo)
         file_type_layout.addWidget(self.custom_type_edit)
         main_layout.addLayout(file_type_layout)
-        
-        # 插入文本输入
-        text_label = QLabel("插入文本 (支持多行):")
-        main_layout.addWidget(text_label)
-        self.text_edit = QTextEdit()
-        self.text_edit.setMinimumHeight(100)
-        self.text_edit.setPlaceholderText("在此输入要插入的文本，支持多行输入...")
-        main_layout.addWidget(self.text_edit)
-        
+
         # 插入位置输入
         position_layout = QHBoxLayout()
         position_label = QLabel("插入位置 (0为开头, -1为结尾):")
@@ -86,6 +78,14 @@ class InsertTextDialog(QDialog):
         position_layout.addWidget(position_label)
         position_layout.addWidget(self.position_edit)
         main_layout.addLayout(position_layout)
+
+        # 插入文本输入
+        text_label = QLabel("插入文本 (支持多行):")
+        main_layout.addWidget(text_label)
+        self.text_edit = QTextEdit()
+        self.text_edit.setMinimumHeight(100)
+        self.text_edit.setPlaceholderText("在此输入要插入的文本，支持多行输入...")
+        main_layout.addWidget(self.text_edit)
         
         # 选项设置
         options_layout = QHBoxLayout()
@@ -242,7 +242,7 @@ class InsertTextDialog(QDialog):
                 
                 # 显示预览信息
                 rel_path = os.path.relpath(file_path, self.folder_path)
-                self.log_edit.append(f"将在 {rel_path} 的第 {actual_position} 行前插入文本")
+                self.log_edit.append(f"将在 {rel_path} 的第 {actual_position} 行前插入文本（插入位置在插入内容前面）")
                 
                 # 显示部分文件内容作为预览
                 start_line = max(0, actual_position - 2)
@@ -338,7 +338,7 @@ class InsertTextDialog(QDialog):
                 except ValueError:
                     # 如果路径在不同驱动器上，直接使用文件名
                     rel_path = os.path.basename(file_path)
-                self.log_edit.append(f"已在 {rel_path} 的第 {actual_position} 行前插入文本")
+                self.log_edit.append(f"已在 {rel_path} 的第 {actual_position} 行前插入文本（插入位置在插入内容前面）")
                 
             except Exception as e:
                 errors += 1

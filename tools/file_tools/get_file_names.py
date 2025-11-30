@@ -59,6 +59,7 @@ class GetFileNamesDialog(QDialog):
         options_layout = QHBoxLayout()
         options_label = QLabel("选项:")
         self.remove_ext_checkbox = QCheckBox("去掉文件后缀")
+        self.remove_ext_checkbox.setChecked(True)  # 默认选中去掉后缀
         options_layout.addWidget(options_label)
         options_layout.addWidget(self.remove_ext_checkbox)
         options_layout.addStretch()

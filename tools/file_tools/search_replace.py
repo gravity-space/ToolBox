@@ -673,7 +673,7 @@ class SearchReplaceDialog(QDialog):
                             # 在命中之间添加空行（除了第一个命中）
                             if i > 0:
                                 self.log_edit.append("")
-                            self.log_edit.append(f"^^^^^^^^^匹配 {i+1}:")
+                            self.log_edit.append(f"^^^^^^^^^【{rel_path}】 匹配 {i+1}:^^^^^^^^^")
                             self.log_edit.append(f"{context}")
                     else:
                         # 对于普通文本，显示所有匹配位置的上下文
@@ -686,7 +686,7 @@ class SearchReplaceDialog(QDialog):
                             # 在命中之间添加空行（除了第一个命中）
                             if i > 0:
                                 self.log_edit.append("")
-                            self.log_edit.append(f"^^^^^^^^^匹配 {i+1}:")
+                            self.log_edit.append(f"^^^^^^^^^【{rel_path}】 匹配 {i+1}:^^^^^^^^^")
                             self.log_edit.append(f"{context}")
         
             except UnicodeDecodeError:
